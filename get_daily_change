@@ -1,0 +1,75 @@
+from pandas_datareader import data as pdr
+import pandas as pd
+import numpy as np
+import yfinance as yf
+
+pd.options.display.max_columns = None
+pd.options.display.max_rows = None
+np.set_printoptions(threshold=np.inf)
+
+all_symbols = pdr.get_nasdaq_symbols()
+all_symbols = all_symbols[all_symbols['Nasdaq Traded']]
+nasd = all_symbols[all_symbols['Listing Exchange'] == "Q"]
+
+a = list(nasd.index)
+file_write_obj = open("symbols.txt", 'w')
+for var in a:
+    file_write_obj.writelines(var)
+    file_write_obj.write('\n')
+file_write_obj.close()
+
+data = yf.download(  # or pdr.get_data_yahoo(...
+    # tickers list or string as well
+    tickers=a,
+
+    # use "period" instead of start/end
+    # valid periods: 1d,5d,1mo,3mo,6mo,1y,2y,5y,10y,ytd,max
+    # (optional, default is '1mo')
+
+    start="2019-01-01",
+    end="2020-01-01",
+    # fetch data by interval (including intraday if period < 60 days)
+    # valid intervals: 1m,2m,5m,15m,30m,60m,90m,1h,1d,5d,1wk,1mo,3mo
+    # (optional, default is '1d')
+    interval="1d",
+
+    # group by ticker (to access via data['SPY'])
+    # (optional, default is 'column')
+    group_by='column',
+
+    # adjust all OHLC automatically
+    # (optional, default is False)
+    auto_adjust=True,
+
+    # download pre/post regular market hours data
+    # (optional, default is False)
+    prepost=True,
+
+    # use threads for mass downloading? (True/False/Integer)
+    # (optional, default is True)
+    threads=True,
+
+    # proxy URL scheme use use when downloading?
+    # (optional, default is None)
+
+    proxy=None
+)
+close = data["Close"]
+close = close.fillna(method='ffill')
+close = close.dropna(axis="columns")
+re = close.pct_change()
+re = re.dropna()
+df = {"gt_val": {}, "gt_sym": {}, "lt_val": {}, "lt_sym": {}}
+for i in range(len(re.index)):
+    series = re.iloc[i, :]
+    date = series.name
+    series_lt = series[series.values < 0].sort_values(ascending=True)
+    series_gt = series[series.values > 0].sort_values(ascending=False)
+    df["gt_val"][date] = series_gt.to_list()
+    df["gt_sym"][date] = series_gt.index.values.tolist()
+    df["lt_val"][date] = series_lt.to_list(),
+    df["lt_sym"][date] = series_lt.index.values.tolist()
+df = pd.DataFrame(df)
+df.to_csv("data.csv")
+
+
