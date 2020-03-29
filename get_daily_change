@@ -3,24 +3,23 @@ import pandas as pd
 import numpy as np
 import yfinance as yf
 
-pd.options.display.max_columns = None
-pd.options.display.max_rows = None
-np.set_printoptions(threshold=np.inf)
+all_symbols = pdr.get_nasdaq_symbols()  # get all nasdaq symbols
+all_symbols = all_symbols[all_symbols['Nasdaq Traded']] # get traded nasdaq symbols
+nasd = all_symbols[all_symbols['Listing Exchange'] == "Q"] # get nasdaq symbols
 
-all_symbols = pdr.get_nasdaq_symbols()
-all_symbols = all_symbols[all_symbols['Nasdaq Traded']]
-nasd = all_symbols[all_symbols['Listing Exchange'] == "Q"]
+nasdaq = list(nasd.index)
 
-a = list(nasd.index)
+# save all nasdaq symbols into txt
 file_write_obj = open("symbols.txt", 'w')
-for var in a:
+for var in nasdaq:
     file_write_obj.writelines(var)
     file_write_obj.write('\n')
 file_write_obj.close()
 
+# get close data of nasdaq stocks
 data = yf.download(  # or pdr.get_data_yahoo(...
     # tickers list or string as well
-    tickers=a,
+    tickers=nasdaq,
 
     # use "period" instead of start/end
     # valid periods: 1d,5d,1mo,3mo,6mo,1y,2y,5y,10y,ytd,max
@@ -55,14 +54,25 @@ data = yf.download(  # or pdr.get_data_yahoo(...
     proxy=None
 )
 close = data["Close"]
+
+# fillna with previous day
 close = close.fillna(method='ffill')
+
+# delete non-traded stocks at the beginning of 2019
 close = close.dropna(axis="columns")
-re = close.pct_change()
-re = re.dropna()
+
+# get daily change
+daily_change = close.pct_change()
+
+# delete the first day
+daily_change = daily_change.dropna()
+
+# gt means great than 0, lt means less than 0, val means value, sym means stock symbol
 df = {"gt_val": {}, "gt_sym": {}, "lt_val": {}, "lt_sym": {}}
-for i in range(len(re.index)):
-    series = re.iloc[i, :]
-    date = series.name
+
+for i in range(len(daily_change.index)):
+    series = daily_change.iloc[i, :] # get stock returns at index i (day)
+    date = series.name # get date
     series_lt = series[series.values < 0].sort_values(ascending=True)
     series_gt = series[series.values > 0].sort_values(ascending=False)
     df["gt_val"][date] = series_gt.to_list()
