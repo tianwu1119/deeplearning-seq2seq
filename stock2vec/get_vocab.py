@@ -1,4 +1,4 @@
-# import sys
+# get vocabulary of all symbols of stocks
 
 specials = ['<s>', '<pad>', '</s>', '<unk>']
 
