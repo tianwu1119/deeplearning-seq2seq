@@ -1,14 +1,10 @@
-# get vocabulary of all symbols of stocks
+# import sys
 
-specials = ['<s>', '<pad>', '</s>', '<unk>']
-
-in_dir = './Data/symbols.txt'
-out_dir = './Data/stocks_symbols.vocab'
+in_dir = '/Users/jiaguo/OneDrive - cumc.columbia.edu/AcademicYear/Spring 2020/W4995 Deep Learning/Project/Data/3000/symbols.txt'
+out_dir = '/Users/jiaguo/OneDrive - cumc.columbia.edu/AcademicYear/Spring 2020/W4995 Deep Learning/Project/Data/stocks_symbols.vocab'
 
 with open(in_dir, 'r', encoding='utf-8') as fin:
     with open(out_dir, 'w', encoding='utf-8') as fout:
-        for word in specials:
-            fout.write(word+'\n')
         for line in fin:
             idx = line.rfind(' ')
             word = line[:idx]
