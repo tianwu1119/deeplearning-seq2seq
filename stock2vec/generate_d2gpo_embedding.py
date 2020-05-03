@@ -1,5 +1,3 @@
-# change .vec (from fastText) to .w2vec (vectors of stocks) for next analysis
-
 import sys
 from gensim.models.wrappers import FastText
 from gensim.scripts.glove2word2vec import glove2word2vec
